@@ -21,7 +21,16 @@ class ScraperController < ApplicationController
     body = Nokogiri::HTML.parse(driver.page_source)
 
     fields.each do |field_name, selector|
-      scraped_data[field_name] = body.css(selector).text.strip
+      if field_name == 'meta'
+        meta_data = {}
+        selector.each do |meta_name|
+          meta_tag = body.css("meta[name='#{meta_name}']").first
+          meta_data[meta_name] = meta_tag['content'] if meta_tag
+        end
+        scraped_data['meta'] = meta_data
+      else
+        scraped_data[field_name] = body.css(selector).text.strip
+      end
     end
 
     render json: scraped_data
