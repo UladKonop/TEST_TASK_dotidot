@@ -1,24 +1,25 @@
-# README
+# TEST_TASK_dotidot
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## As a Dotidot user, I have the option to use the Scraper to expand my data with new fields. The goal of the task is to create a standalone Rails application with a simple interface for the scraper. It should receive a URL address and a list of fields to extract from webpage on given URL address in the request.
 
-Things you may want to cover:
+### Task #1
 
-* Ruby version
+Basic behavior of the scraper, i.e., using simple CSS selectors.
 
-* System dependencies
+Request:
 
-* Configuration
+GET /data
 
-* Database creation
+JSON params:
 
-* Database initialization
+{"url": "https://www.alza.cz/aeg-7000-prosteam-lfr73964cc-d7635493.htm", "fields":{"price":".price-box__price","rating_count":".ratingCount","rating_value":".ratingValue"}}
 
-* How to run the test suite
+Response:
 
-* Services (job queues, cache servers, search engines, etc.)
+{
+"price": "18290,-",
+"rating_value": "4,9",
+"rating_count": "7 hodnocení"
+}
 
-* Deployment instructions
-
-* ...
+    curl -d '{"url":"https://www.alza.cz/aeg-7000-prosteam-lfr73964cc-d7635493.htm","fields":{"price":".price-box__price","rating_count":".ratingCount","rating_value":".ratingValue"}}' -H "Content-Type: application/json" -X GET http://localhost:3000/data
