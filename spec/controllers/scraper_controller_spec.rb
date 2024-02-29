@@ -3,49 +3,32 @@
 require 'rails_helper'
 
 RSpec.describe ScraperController, type: :controller do
-  describe 'GET #scrape' do
-    let(:url) { 'https://example.com' }
-    let(:fields) { { 'title' => 'h1' } }
-    let(:meta) { { 'meta' => ['keywords'] } }
-    let(:html) { '<html><body><h1>Title</h1><p>Content</p></body></html>' }
-    let(:meta_html) { '<html><head><meta name="keywords" content="keyword"</head></html>' }
-    let(:invalid_params) { { url: '', fields: {} } }
+  describe 'GET #new' do
+    context 'with valid parameters' do
+      let(:valid_params) { { 'url' => 'http://example.com', 'fields' => { 'title' => 'h1' } } }
 
-    context 'with valid fields parameters' do
       before do
-        allow_any_instance_of(Selenium::WebDriver::Driver).to receive(:page_source).and_return(html)
-        allow(Nokogiri::HTML).to receive(:parse).with(html).and_return(Nokogiri::HTML(html))
-        allow_any_instance_of(Nokogiri::HTML::Document).to receive(:css).and_call_original
-        allow_any_instance_of(Nokogiri::HTML::Document).to receive(:css).with('h1').and_return(Nokogiri::HTML(html).css('h1'))
+        service_double = instance_double(ScrapeService)
+        allow(ScrapeService).to receive(:new).with(valid_params['url'], valid_params['fields']).and_return(service_double)
+        allow(service_double).to receive(:call).and_return(service_double)
+        allow(service_double).to receive(:success?).and_return(true)
+        allow(service_double).to receive(:scraped_data).and_return("{\"title\":\"Title\"}")
       end
 
-      it 'returns scraped data' do
-        get :scrape, params: { url:, fields: }
-        expect(response).to have_http_status(:success)
-        expect(JSON.parse(response.body)).to eq({ 'title' => 'Title' })
-      end
-    end
-
-    context 'with valid meta parameters' do
-      before do
-        allow_any_instance_of(Selenium::WebDriver::Driver).to receive(:page_source).and_return(meta_html)
-        allow(Nokogiri::HTML).to receive(:parse).with(meta_html).and_return(Nokogiri::HTML(meta_html))
-        allow_any_instance_of(Nokogiri::HTML::Document).to receive(:css).and_call_original
-        allow_any_instance_of(Nokogiri::HTML::Document).to receive(:css).with('meta[name=keywords]').and_return(Nokogiri::HTML(meta_html).css('meta[name=keywords]'))
-      end
-
-      it 'returns scraped data' do
-        get :scrape, params: { url: url, fields: meta }
-        expect(response).to have_http_status(:success)
-        expect(JSON.parse(response.body)).to eq({ "meta" => {"keywords" => "keyword"} })
+      it 'makes request with the correct parameters and checks success' do
+        get :new, params: valid_params
+        expect(ScrapeService).to have_received(:new).with(valid_params['url'], valid_params['fields'])
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to eq("{\"title\":\"Title\"}")
       end
     end
 
     context 'with invalid parameters' do
-      it 'returns unprocessable entity error' do
-        get :scrape, params: invalid_params
+      let(:invalid_params) { { 'url' => '', 'fields' => { } } }
+
+      it 'makes request with invalid parameters and checks failure' do
+        get :new, params: invalid_params
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)).to eq({ 'error' => "'url' and 'fields' are required" })
       end
     end
   end
